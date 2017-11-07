@@ -11,11 +11,27 @@ import io.undertow.server.HttpServerExchange;
 
 public class MyProxy implements Runnable {
 
+    private short httpPort;
+    private MyProxy(short httpPort) {
+        this.httpPort = httpPort;
+    }
+
 	public static void main(String[] args) {
-        new Thread(new MyProxy()).start();
+        if (args.length < 3) {
+            System.out.println("Usage:");
+            System.out.println("  java -jar MyProxy.jar 80 443 cert.pfx");
+            return;
+        }
         try {
+            short httpPort = Short.parseShort(args[0]);
+            short httpsPort = Short.parseShort(args[1]);
+
+            new Thread(new MyProxy(httpPort)).start();
+            
+            SSLContext sslContext = MySslContext.getSslContext(args[2],
+                    "PKCS12", "");
             Undertow server = Undertow.builder()
-                    .addHttpsListener(65533, "0.0.0.0", getSslContext())
+                    .addHttpsListener(httpsPort, "0.0.0.0", sslContext)
                     .setHandler(new HttpHandler() {
                         @Override
                         public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -23,6 +39,9 @@ public class MyProxy implements Runnable {
                         }
                     }).build();
             server.start();
+        } catch (NumberFormatException ex) {
+            System.out.println("Usage:");
+            System.out.println("  java -jar MyProxy.jar 80 443 cert.pfx");
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -30,7 +49,7 @@ public class MyProxy implements Runnable {
 	
     public void run() {
 		Undertow server = Undertow.builder()
-                .addHttpListener(65532, "0.0.0.0")
+                .addHttpListener(httpPort, "0.0.0.0")
                 .setHandler(new HttpHandler() {
                     @Override
                     public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -40,8 +59,4 @@ public class MyProxy implements Runnable {
         server.start();
 	}
 
-    private static SSLContext getSslContext() throws IOException {
-        return MySslContext.getSslContext(System.getProperty("cert_file"),
-                "PKCS12", "");
-    }
 }
