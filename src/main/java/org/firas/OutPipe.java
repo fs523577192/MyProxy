@@ -9,6 +9,9 @@ import java.nio.charset.Charset;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+
 import io.undertow.io.Receiver;
 import io.undertow.io.Sender;
 import io.undertow.server.HttpServerExchange;
@@ -52,14 +55,13 @@ public class OutPipe implements Receiver.FullBytesCallback {
 				bytes.add((byte)c);
 			}
 			fromServer.close();
-			System.out.print("Length: ");
-			System.out.println(c = bytes.size());
+			c = bytes.size();
+			debug("Length: " + c);
 			
 			getHeaders(connection, exchange);
 			
 			int code = connection.getResponseCode();
-			System.out.print("Status: ");
-			System.out.println(code); // For Debug
+			debug("Status: " + code); // For Debug
 			
 			exchange.setStatusCode(code);
 			Sender toClient = exchange.getResponseSender();
@@ -82,14 +84,20 @@ public class OutPipe implements Receiver.FullBytesCallback {
 		}
 	}
 
+	private static final SimpleDateFormat formatter =
+			new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+	private void debug(String str) {
+		System.out.println('[' + formatter.format(new Date()) + "] " + str);
+	}
+
 	private void getHeaders(HttpURLConnection connection,
 			HttpServerExchange exchange) {
 		HeaderMap clientHeaders = exchange.getResponseHeaders();
 		String key = connection.getHeaderFieldKey(0);
 		String value;
 		if (null != key) {
-			System.out.print("[O] " + key + ": ");
-			System.out.println(value = connection.getHeaderField(0));
+			value = connection.getHeaderField(0);
+			debug("[O] " + key + ": " + value);
 			if (getFont && key.equalsIgnoreCase("content-type")) {
 				value = "text/css";
 			}
@@ -99,8 +107,8 @@ public class OutPipe implements Receiver.FullBytesCallback {
 		while (true) {
 			key = connection.getHeaderFieldKey(++i);
 			if (null == key) break;
-			System.out.print("[O] " + key + ": ");
-			System.out.println(value = connection.getHeaderField(i));
+			value = connection.getHeaderField(i);
+			debug("[O] " + key + ": " + value);
 			if (getFont && key.equalsIgnoreCase("content-type")) {
 				value = "text/css";
 			}

@@ -8,9 +8,12 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Date;
 import java.util.Iterator;
+import java.text.SimpleDateFormat;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+
 import io.undertow.io.Receiver;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -43,15 +46,14 @@ public class ProxyHandler {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		System.out.println("--== End ==--");
+		debug("--== End ==--");
 	}
 	
 	private static synchronized SSLContext getSslContext() {
 		if (null == sslContext) {
 			try {
 				sslContext = SSLContext.getInstance("SSL");
-				sslContext.init(null, new javax.net.ssl.TrustManager[]
-						{ new TrustAnyTrustManager() },
+				sslContext.init(null, TrustAnyTrustManager.MANAGER_ARRAY,
 						new java.security.SecureRandom());
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -82,7 +84,7 @@ public class ProxyHandler {
 			if (getFont && name.equalsIgnoreCase("accept-encoding")) {
 				line = "identity";
 			}
-			System.out.println("[IN] " + name + ": " + line);
+			debug("[IN] " + name + ": " + line);
 			connection.setRequestProperty(name, line);
 		}
 		connection.setDoInput(true);
@@ -106,12 +108,19 @@ public class ProxyHandler {
 		}
 	}
 	
+	private static final SimpleDateFormat formatter =
+			new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+	private void debug(String str) {
+		System.out.println('[' + formatter.format(new Date()) + "] " + str);
+	}
+
 	private void debug() {
 		System.out.println(host + ":" + port);
 		System.out.println(method + "  " + path);
 	}
 	
 	private boolean filterGoogleApis() {
+        debug("Host: " + host);
 		if (host.equals("fonts.googleapis.com")) {
 			host = "cdn.baomitu.com";
 			port = 443;
