@@ -1,26 +1,22 @@
 package org.firas;
 
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.Date;
-import java.util.Iterator;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 
 import io.undertow.io.Receiver;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.Headers;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
+import io.undertow.util.Headers;
 
-public class ProxyHandler {
+class ProxyHandler {
 
 	private static SSLContext sslContext = null;
 	private HeaderMap headers;
@@ -29,7 +25,7 @@ public class ProxyHandler {
 	private int port = 80;
 	private URI uri;
 	
-	public ProxyHandler(HttpServerExchange exchange) throws IOException {
+	ProxyHandler(HttpServerExchange exchange) {
 		parseUrl(exchange);
 		debug();
 		filterGoogleApis();
@@ -76,9 +72,7 @@ public class ProxyHandler {
 			url = new URL("http", host, port, path);
 			connection = (HttpURLConnection)url.openConnection();
 		}
-		Iterator<HeaderValues> iterator = headers.iterator();
-		while (iterator.hasNext()) {
-			HeaderValues values = iterator.next();
+		for (HeaderValues values : headers) {
 			String name = values.getHeaderName().toString();
 			String line = String.join(",", values);
 			if (getFont && name.equalsIgnoreCase("accept-encoding")) {
@@ -121,7 +115,16 @@ public class ProxyHandler {
 	
 	private boolean filterGoogleApis() {
         debug("Host: " + host);
-		if (host.equals("fonts.googleapis.com")) {
+        boolean changeHost = "true".equals(
+                System.getProperty("change_host"));
+		if ((changeHost && path.indexOf("/ajax/libs") == 0) ||
+                "ajax.googleapis.com".equals(host) ||
+				"cdnjs.cloudflare.com".equals(host)) {
+			host = "lib.baomitu.com";
+			port = 80;
+			path = path.replaceFirst("^/ajax/libs", "");
+			return true;
+		} else if (changeHost || "fonts.googleapis.com".equals(host)) {
 			host = "cdn.baomitu.com";
 			port = 443;
 			try {
@@ -131,12 +134,6 @@ public class ProxyHandler {
 				ex.printStackTrace();
 			}
 			getFont = true;
-			return true;
-		} else if (host.equals("ajax.googleapis.com") ||
-				host.equals("cdnjs.cloudflare.com")) {
-			host = "lib.baomitu.com";
-			port = 80;
-			path = path.replaceFirst("^/ajax/libs", "");
 			return true;
 		}
 		return false;

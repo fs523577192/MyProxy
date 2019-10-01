@@ -32,12 +32,7 @@ public class MyProxy implements Runnable {
                     "PKCS12", "");
             Undertow server = Undertow.builder()
                     .addHttpsListener(httpsPort, "0.0.0.0", sslContext)
-                    .setHandler(new HttpHandler() {
-                        @Override
-                        public void handleRequest(final HttpServerExchange exchange) throws Exception {
-                            new ProxyHandler(exchange);
-                        }
-                    }).build();
+                    .setHandler(exchange -> new ProxyHandler(exchange)).build();
             server.start();
         } catch (NumberFormatException ex) {
             System.out.println("Usage:");
@@ -50,12 +45,7 @@ public class MyProxy implements Runnable {
     public void run() {
 		Undertow server = Undertow.builder()
                 .addHttpListener(httpPort, "0.0.0.0")
-                .setHandler(new HttpHandler() {
-                    @Override
-                    public void handleRequest(final HttpServerExchange exchange) throws Exception {
-                        new ProxyHandler(exchange);
-                    }
-                }).build();
+                .setHandler(exchange -> new ProxyHandler(exchange)).build();
         server.start();
 	}
 

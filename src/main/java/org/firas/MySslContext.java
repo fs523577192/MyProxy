@@ -15,11 +15,10 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 
-public class MySslContext {
+class MySslContext {
 
-    public static SSLContext getSslContext(
+    static SSLContext getSslContext(
             String keyStoreName,
             String keyStoreType,
             String keyStorePassword
@@ -49,15 +48,12 @@ public class MySslContext {
             url = "file:" + url;
         }
 
-        final InputStream stream = new URL(url).openStream();
-        try {
+        try (InputStream stream = new URL(url).openStream()) {
             KeyStore loadedKeystore = KeyStore.getInstance(type);
             loadedKeystore.load(stream, storePassword.toCharArray());
             return loadedKeystore;
         } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException exc) {
             throw new IOException(String.format("Unable to load KeyStore %s", url), exc);
-        } finally {
-            stream.close();
         }
     }
 

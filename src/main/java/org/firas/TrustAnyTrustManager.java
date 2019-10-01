@@ -7,7 +7,7 @@ import java.security.cert.X509Certificate;
 
 public class TrustAnyTrustManager implements X509TrustManager {
 	
-    public static TrustManager[] MANAGER_ARRAY = new TrustManager[] {
+    static TrustManager[] MANAGER_ARRAY = new TrustManager[] {
             new TrustAnyTrustManager()
     };
 

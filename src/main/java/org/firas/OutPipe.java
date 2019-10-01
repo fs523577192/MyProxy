@@ -25,7 +25,7 @@ public class OutPipe implements Receiver.FullBytesCallback {
 	private boolean getFont = false;
 	private HttpURLConnection connection;
 	
-	public OutPipe(HttpURLConnection connection, boolean getFont) {
+	OutPipe(HttpURLConnection connection, boolean getFont) {
 		this.connection = connection;
 		this.getFont = getFont;
 	}
